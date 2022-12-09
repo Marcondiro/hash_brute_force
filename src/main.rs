@@ -6,7 +6,7 @@ use std::thread;
 /// Bruteforce 6 digits PIN MD5 hash
 fn main() {
     let iterations = 25 * 400;
-    let md5: u128 = 0xd04988522ddfed3133cc24fb6924eae9;
+    let flag_hash: u128 = 0xd04988522ddfed3133cc24fb6924eae9;
 
     let threads = 8;
     let pins_per_thread = 1_000_000 / threads;
@@ -20,19 +20,19 @@ fn main() {
         thread::spawn(move || {
             let mut hasher = Hasher::new(Algorithm::MD5);
 
-            for n in t * pins_per_thread..(t + 1) * pins_per_thread {
-                let mut hash = format!("{:0>6}", n).as_bytes().to_vec();
+            for pin in t * pins_per_thread..(t + 1) * pins_per_thread {
+                let mut buff = format!("{:0>6}", pin).into_bytes();
                 for _i in 0..iterations {
-                    hasher.write_all(hash.as_slice()).unwrap();
-                    hash = hasher.finish();
+                    hasher.write_all(&buff).unwrap();
+                    buff = hasher.finish();
                 }
-                if hash == md5.to_be_bytes() {
-                    t_sender.send(format!("{:0>6}", n)).unwrap();
+                if buff == flag_hash.to_be_bytes() {
+                    t_sender.send(format!("{:0>6}", pin)).unwrap();
                     return;
                 }
-                if n % 5000 == 0 {
+                if pin % 5000 == 0 {
                     println!("[Thread {}] I'm alive and I'm evaluating: {}", t,
-                             format!("{:0>6}", n));
+                             format!("{:0>6}", pin));
                 }
             }
         });
